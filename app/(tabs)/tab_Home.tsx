@@ -7,7 +7,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,10 +14,17 @@ import {
 const { width } = Dimensions.get('window');
 
 export default function RecipeGeneratorHome() {
-  const [ingredients, setIngredients] = useState('');
   const [recipe, setRecipe] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState('');
   const scrollX = useRef(new Animated.Value(0)).current;
+
+  // Mock grocery items (in real app, this would come from the inventory)
+  const availableIngredients = [
+    'Fresh Apples', 'Organic Bananas', 'Fresh Carrots', 'Whole Milk', 
+    'Fresh Chicken', 'White Bread', 'Bell Peppers', 'Greek Yogurt', 
+    'Ground Beef', 'Paprika', 'Onions', 'Garlic', 'Tomatoes'
+  ];
 
   // Mock video data
   const videos = [
@@ -46,37 +52,124 @@ export default function RecipeGeneratorHome() {
     return () => clearTimeout(timer);
   }, []);
 
-  const generateRecipe = async () => {
-    if (!ingredients.trim()) return;
-    
+  const generateRecipe = async (mealType) => {
+    setSelectedMealType(mealType);
     setIsGenerating(true);
     
     // Simulate API call
     setTimeout(() => {
-      const mockRecipe = `
-🍳 Delicious Recipe with ${ingredients}
+      let mockRecipe = '';
+      
+      switch(mealType) {
+        case 'breakfast':
+          mockRecipe = `
+🌅 Breakfast Recipe
 
-Ingredients:
-${ingredients.split(',').map(ing => `• ${ing.trim()}`).join('\n')}
-• Salt and pepper to taste
-• 2 tbsp olive oil
+Using your available ingredients:
+• Greek Yogurt
+• Fresh Apples
+• White Bread
+
+Recipe: Apple Cinnamon Toast with Yogurt
 
 Instructions:
-1. Prepare all ingredients by washing and chopping as needed
-2. Heat olive oil in a large pan over medium heat
-3. Add your main ingredients and cook for 5-7 minutes
-4. Season with salt and pepper
-5. Cook until tender and flavors are well combined
-6. Serve hot and enjoy!
+1. Toast 2 slices of white bread until golden
+2. Slice fresh apples thinly
+3. Spread Greek yogurt on toast
+4. Top with apple slices
+5. Sprinkle with cinnamon if available
 
-Cooking Time: 20 minutes
+Cooking Time: 5 minutes
+Servings: 1 person
+Perfect for: Quick morning meal
+          `;
+          break;
+          
+        case 'lunch':
+          mockRecipe = `
+🌞 Lunch Recipe
+
+Using your available ingredients:
+• Fresh Chicken
+• Bell Peppers
+• Onions
+• Paprika
+
+Recipe: Paprika Chicken with Bell Peppers
+
+Instructions:
+1. Cut chicken into bite-sized pieces
+2. Slice bell peppers and onions
+3. Heat oil in a pan, cook chicken until golden
+4. Add vegetables and cook for 8-10 minutes
+5. Season with paprika, salt, and pepper
+6. Serve hot
+
+Cooking Time: 25 minutes
 Servings: 2-3 people
-      `;
+Perfect for: Hearty lunch meal
+          `;
+          break;
+          
+        case 'dinner':
+          mockRecipe = `
+🌙 Dinner Recipe
+
+Using your available ingredients:
+• Ground Beef
+• Fresh Carrots
+• Onions
+• Garlic
+• Tomatoes
+
+Recipe: Hearty Beef and Vegetable Stew
+
+Instructions:
+1. Brown ground beef in a large pot
+2. Add diced onions and garlic, cook until fragrant
+3. Add chopped carrots and tomatoes
+4. Simmer for 30-40 minutes until tender
+5. Season with available herbs and spices
+6. Serve with bread if available
+
+Cooking Time: 45 minutes
+Servings: 4 people
+Perfect for: Comforting dinner
+          `;
+          break;
+      }
       
       setRecipe(mockRecipe);
       setIsGenerating(false);
     }, 2000);
   };
+
+  const MealButton = ({ mealType, icon, title, description, onPress }) => (
+    <TouchableOpacity
+      style={[
+        styles.mealButton,
+        selectedMealType === mealType && styles.mealButtonSelected
+      ]}
+      onPress={() => onPress(mealType)}
+      disabled={isGenerating}
+    >
+      <Text style={styles.mealIcon}>{icon}</Text>
+      <View style={styles.mealInfo}>
+        <Text style={[
+          styles.mealTitle,
+          selectedMealType === mealType && styles.mealTitleSelected
+        ]}>
+          {title}
+        </Text>
+        <Text style={[
+          styles.mealDescription,
+          selectedMealType === mealType && styles.mealDescriptionSelected
+        ]}>
+          {description}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   const VideoCard = ({ video }) => (
     <View style={styles.videoCard}>
@@ -114,57 +207,71 @@ Servings: 2-3 people
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Create Amazing{'\n'}Recipes</Text>
           <Text style={styles.heroSubtitle}>
-            Enter your ingredients and let AI generate delicious recipes for you
+            Generate recipes based on your available grocery items
           </Text>
         </View>
 
-        {/* Input Form */}
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Enter Your Ingredients</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="e.g., chicken, tomatoes, onions, garlic..."
-              placeholderTextColor="#999"
-              value={ingredients}
-              onChangeText={setIngredients}
-              multiline
-              textAlignVertical="top"
-            />
+        {/* Available Ingredients */}
+        <View style={styles.ingredientsContainer}>
+          <Text style={styles.sectionTitle}>Available Ingredients</Text>
+          <View style={styles.ingredientsList}>
+            {availableIngredients.map((ingredient, index) => (
+              <View key={index} style={styles.ingredientChip}>
+                <Text style={styles.ingredientText}>{ingredient}</Text>
+              </View>
+            ))}
           </View>
+        </View>
+
+        {/* Meal Type Selection */}
+        <View style={styles.mealSelectionContainer}>
+          <Text style={styles.sectionTitle}>Choose Meal Type</Text>
           
-          <TouchableOpacity
-            style={[styles.generateBtn, isGenerating && styles.generateBtnDisabled]}
+          <MealButton
+            mealType="breakfast"
+            icon="🌅"
+            title="Breakfast"
+            description="Start your day right"
             onPress={generateRecipe}
-            disabled={isGenerating || !ingredients.trim()}
-          >
-            <Text style={styles.generateBtnText}>
-              {isGenerating ? 'Generating Recipe...' : 'Generate Recipe'}
-            </Text>
-          </TouchableOpacity>
+          />
+          
+          <MealButton
+            mealType="lunch"
+            icon="🌞"
+            title="Lunch"
+            description="Midday energy boost"
+            onPress={generateRecipe}
+          />
+          
+          <MealButton
+            mealType="dinner"
+            icon="🌙"
+            title="Dinner"
+            description="End the day deliciously"
+            onPress={generateRecipe}
+          />
         </View>
 
         {/* Results Section */}
-        <View style={styles.resultsContainer}>
-          <Text style={styles.sectionTitle}>Your Recipe</Text>
-          <View style={styles.resultsBox}>
-            {recipe ? (
-              <ScrollView style={styles.recipeScroll}>
-                <Text style={styles.recipeText}>{recipe}</Text>
-              </ScrollView>
-            ) : (
-              <View style={styles.resultsPlaceholder}>
-                <Text style={styles.placeholderIcon}>🍳</Text>
-                <Text style={styles.placeholderText}>
-                  {isGenerating 
-                    ? 'Cooking up something delicious...' 
-                    : 'Your generated recipe will appear here'
-                  }
-                </Text>
-              </View>
-            )}
+        {(recipe || isGenerating) && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.sectionTitle}>Your Recipe</Text>
+            <View style={styles.resultsBox}>
+              {recipe ? (
+                <ScrollView style={styles.recipeScroll}>
+                  <Text style={styles.recipeText}>{recipe}</Text>
+                </ScrollView>
+              ) : (
+                <View style={styles.resultsPlaceholder}>
+                  <Text style={styles.placeholderIcon}>🍳</Text>
+                  <Text style={styles.placeholderText}>
+                    Cooking up something delicious...
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Video Section */}
         <View style={styles.videoSection}>
@@ -233,7 +340,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 40,
     alignItems: 'center',
-    backgroundColor: 'linear-gradient(135deg, #fff 0%, #fff8f3 100%)',
+    backgroundColor: '#fff8f3',
   },
   heroTitle: {
     fontSize: 36,
@@ -249,60 +356,40 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-  // Form Styles
-  formContainer: {
+  // Ingredients Styles
+  ingredientsContainer: {
     marginHorizontal: 20,
     marginVertical: 20,
     backgroundColor: '#fff',
-    padding: 25,
-    borderRadius: 20,
-    shadowColor: '#ff8c00',
-    shadowOffset: { width: 0, height: 5 },
+    padding: 20,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-  },
-  textInput: {
-    borderWidth: 2,
-    borderColor: '#f0f0f0',
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
-    minHeight: 100,
-    color: '#333',
-  },
-  generateBtn: {
-    backgroundColor: '#ff8c00',
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#ff8c00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 3,
   },
-  generateBtnDisabled: {
-    backgroundColor: '#ffb366',
-    opacity: 0.7,
+  ingredientsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  generateBtnText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+  ingredientChip: {
+    backgroundColor: '#fff3e0',
+    borderColor: '#ffd699',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  ingredientText: {
+    fontSize: 12,
+    color: '#ff8c00',
+    fontWeight: '500',
   },
 
-  // Results Styles
-  resultsContainer: {
+  // Meal Selection Styles
+  mealSelectionContainer: {
     marginHorizontal: 20,
     marginVertical: 10,
   },
@@ -310,8 +397,56 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 15,
+    marginBottom: 20,
     textAlign: 'center',
+  },
+  mealButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  mealButtonSelected: {
+    borderColor: '#ff8c00',
+    backgroundColor: '#fff8f3',
+  },
+  mealIcon: {
+    fontSize: 40,
+    marginRight: 20,
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  mealTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  mealTitleSelected: {
+    color: '#ff8c00',
+  },
+  mealDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  mealDescriptionSelected: {
+    color: '#b8860b',
+  },
+
+  // Results Styles
+  resultsContainer: {
+    marginHorizontal: 20,
+    marginVertical: 20,
   },
   resultsBox: {
     backgroundColor: '#fff',
